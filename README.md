@@ -45,12 +45,3 @@ mkdir -p build       # the Makefile writes here but doesn't create it
 make                 # assembles the 512-byte boot sector into build/os.img
 make run             # boots it in QEMU
 ```
-
-## Status
-
-Currently the build produces and boots **only the boot sector** — `make` assembles `boot/boot.asm` and nothing else, so the bootloader prints "Booting OS..." and then finds no kernel sectors to load. The kernel sources are written but not yet buildable:
-
-- **No kernel build or link step.** The Makefile has no rules for compiling the C files (e.g. `gcc -m32 -ffreestanding`), assembling `kernel/*.asm` as ELF, linking at `0x1000`, or appending the kernel to the disk image.
-- **Missing pieces the link needs:** `kernel/irq.h` is included but not committed; `syscall_stub` (the `int 0x80` entry) isn't defined in `isr.asm`; and the shell's `key_buffer`/`key_ready` line buffer isn't implemented by the keyboard handler. With a one-line `irq.h`, these three are the only unresolved symbols.
-- **Frame allocator overlaps the kernel.** `pmm_init` reserves only frame 0, so the first frames handed to `paging_init` start at `0x1000` — where the kernel was loaded. Reserving the frames the kernel image occupies is needed before paging is enabled.
-- Only the divide-by-zero exception has a handler; the `ticks` shell command doesn't print the tick count yet.
